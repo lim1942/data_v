@@ -23,6 +23,13 @@ async def get_chart(db: AsyncSession, chart_id: int) -> Chart | None:
     return result.scalar_one_or_none()
 
 
+async def get_charts_by_ids(db: AsyncSession, ids: list[int]) -> list[Chart]:
+    if not ids:
+        return []
+    result = await db.execute(select(Chart).where(Chart.id.in_(ids)))
+    return result.scalars().all()
+
+
 async def create_chart(db: AsyncSession, **kwargs) -> Chart:
     chart = Chart(**kwargs)
     db.add(chart)

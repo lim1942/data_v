@@ -11,6 +11,17 @@ from app.services import chart_service
 router = APIRouter(prefix="/charts", tags=["charts"])
 
 
+@router.get("/batch")
+async def batch_get_charts(
+    ids: str = Query(..., description="Comma-separated chart IDs, e.g. 1,2,3"),
+    db: AsyncSession = Depends(get_db),
+    _current_user: dict = Depends(get_current_user),
+):
+    id_list = [int(x.strip()) for x in ids.split(",") if x.strip()]
+    charts = await chart_service.get_charts_by_ids(db, id_list)
+    return [ChartResponse.model_validate(c) for c in charts]
+
+
 @router.get("", response_model=PaginatedResponse)
 async def list_charts(
     page: int = Query(1, ge=1),
