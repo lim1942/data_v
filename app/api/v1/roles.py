@@ -6,6 +6,7 @@ from app.api.deps import get_current_user
 from app.schemas.schemas import (
     RoleCreate, RoleUpdate, RoleResponse,
     BatchRoleDashboardAssign, RoleDashboardAssign,
+    AssignUsersRequest,
 )
 from app.services import role_service
 
@@ -116,3 +117,29 @@ async def update_dashboard_permission(
     if not rd:
         raise HTTPException(status_code=404, detail="Role-dashboard assignment not found")
     return {"message": "Permission updated"}
+
+
+@router.get("/{role_id}/users")
+async def get_role_users(
+    role_id: int,
+    db: AsyncSession = Depends(get_db),
+    _current_user: dict = Depends(get_current_user),
+):
+    role = await role_service.get_role(db, role_id)
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
+    return await role_service.get_role_users(db, role_id)
+
+
+@router.put("/{role_id}/users")
+async def assign_users(
+    role_id: int,
+    body: AssignUsersRequest,
+    db: AsyncSession = Depends(get_db),
+    _current_user: dict = Depends(get_current_user),
+):
+    role = await role_service.get_role(db, role_id)
+    if not role:
+        raise HTTPException(status_code=404, detail="Role not found")
+    await role_service.assign_users(db, role_id, body.user_ids)
+    return {"message": "Role users updated"}

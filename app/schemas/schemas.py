@@ -209,3 +209,7 @@ class RoleDashboardAssign(BaseModel):
 
 class BatchRoleDashboardAssign(BaseModel):
     dashboards: list[RoleDashboardAssign]
+
+
+class AssignUsersRequest(BaseModel):
+    user_ids: list[int]

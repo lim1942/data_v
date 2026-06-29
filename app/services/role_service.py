@@ -3,6 +3,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from app.models.role import Role
 from app.models.dashboard import RoleDashboard
+from app.models.user import UserRole, User
 
 
 async def list_roles(db: AsyncSession) -> list[Role]:
@@ -78,3 +79,40 @@ async def update_dashboard_permission(db: AsyncSession, role_id: int, dashboard_
             rd.can_edit = can_edit
         await db.commit()
     return rd
+
+
+async def get_role_users(db: AsyncSession, role_id: int) -> list[dict]:
+    result = await db.execute(
+        select(User)
+        .join(UserRole, UserRole.user_id == User.id)
+        .where(UserRole.role_id == role_id)
+        .order_by(User.id)
+    )
+    return [
+        {
+            "id": u.id,
+            "username": u.username,
+            "email": u.email,
+            "is_active": u.is_active,
+        }
+        for u in result.scalars().all()
+    ]
+
+
+async def assign_users(db: AsyncSession, role_id: int, user_ids: list[int]) -> None:
+    await db.execute(delete(UserRole).where(UserRole.role_id == role_id))
+
+    unique_user_ids = list(dict.fromkeys(user_ids))
+    if not unique_user_ids:
+        await db.commit()
+        return
+
+    valid_user_ids_result = await db.execute(
+        select(User.id).where(User.id.in_(unique_user_ids))
+    )
+    valid_user_ids = [uid for uid in valid_user_ids_result.scalars().all()]
+
+    for user_id in valid_user_ids:
+        db.add(UserRole(user_id=user_id, role_id=role_id))
+
+    await db.commit()
