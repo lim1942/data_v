@@ -4,8 +4,8 @@ import sys
 
 from sqlalchemy import select
 
-sys.path.insert(0, os.path.join(os.path.dirname(__file__), "..", "backend"))
-os.chdir(os.path.join(os.path.dirname(__file__), "..", "backend"))
+sys.path.insert(0, os.path.dirname(os.path.dirname(__file__)))
+os.chdir(os.path.dirname(os.path.dirname(__file__)))
 
 from app.database import Base, async_session, engine
 from app.models.chart import Chart
