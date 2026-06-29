@@ -23,7 +23,7 @@ def kpi_card_code(title: str, value: str, yoy: str, mom: str, trend: str, series
     line_color = "#3a7afe" if trend == "up" else "#ff6b6b"
     area_color = "rgba(58, 122, 254, 0.12)" if trend == "up" else "rgba(255, 107, 107, 0.12)"
     data = ", ".join(str(v) for v in series)
-    return f'''const {{ ref, onMounted, onUnmounted, h }} = vue
+    return f'''const {{ ref, onMounted, h }} = vue
 
 const TITLE = "{title}"
 const VALUE = "{value}"
@@ -34,24 +34,14 @@ const DELTA_SYMBOL = "{symbol}"
 
 return {{
   setup() {{
-    const isDark = getEChartsTheme() === 'custom-dark'
-    const cardBg = isDark
-      ? 'linear-gradient(180deg,#1a2438 0%,#151f31 100%)'
-      : 'linear-gradient(180deg,#ffffff 0%,#fbfdff 100%)'
-    const border = isDark ? '#2a3a56' : '#e7edf6'
-    const titleColor = isDark ? '#c4d2ea' : '#4a5a72'
-    const mutedColor = isDark ? '#8ea2c3' : '#9aa7bd'
-    const valueColor = isDark ? '#e8eef9' : '#1c2e4a'
-    const subColor = isDark ? '#94a6c4' : '#7d8da6'
+    const $ = themeColors()
     const rootRef = ref(null)
-    let chart = null
 
-    function renderSpark() {{
-      if (!rootRef.value) return
-      const sparkEl = rootRef.value.querySelector('.sparkline')
-      if (!sparkEl) return
-      if (!chart) chart = echarts.init(sparkEl, getEChartsTheme())
-      chart.setOption({{
+    // useChartLifecycle with a getter for the .sparkline child element
+    const {{ renderChart }} = useChartLifecycle(() => rootRef.value?.querySelector('.sparkline'))
+
+    onMounted(() => {{
+      renderChart({{
         animation: true,
         grid: {{ left: 0, right: 0, top: 4, bottom: 0 }},
         xAxis: {{ type: 'category', show: false, data: [{data}] }},
@@ -65,27 +55,24 @@ return {{
           areaStyle: {{ color: '{area_color}' }}
         }}]
       }})
-    }}
-
-    onMounted(() => renderSpark())
-    onUnmounted(() => chart?.dispose())
+    }})
 
     return () => h('div', {{
       ref: rootRef,
-      style: 'height:100%;width:100%;background:' + cardBg + ';border:1px solid ' + border + ';border-radius:8px;padding:10px 12px;box-sizing:border-box;display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 1px 2px rgba(31,53,87,.05);'
+      style: cardStyle($, `background:${{$.gradientBg}};display:flex;flex-direction:column;justify-content:space-between;box-shadow:0 1px 2px rgba(31,53,87,.05);`)
     }}, [
       h('div', {{ style: 'display:flex;justify-content:space-between;align-items:center;' }}, [
         h('div', {{ style: 'display:flex;align-items:center;gap:6px;' }}, [
           h('span', {{ style: 'display:inline-flex;width:14px;height:14px;border-radius:3px;background:#4f89ff;color:#fff;font-size:10px;align-items:center;justify-content:center;font-weight:700;' }}, 'i'),
-          h('span', {{ style: 'font-size:12px;color:' + titleColor + ';font-weight:600;' }}, TITLE)
+          h('span', {{ style: `font-size:12px;color:${{$.titleColor}};font-weight:600;` }}, TITLE)
         ]),
-        h('span', {{ style: 'font-size:12px;color:' + mutedColor + ';' }}, '近30天')
+        h('span', {{ style: `font-size:12px;color:${{$.mutedColor}};` }}, '近30天')
       ]),
       h('div', {{ style: 'display:flex;align-items:flex-end;gap:8px;' }}, [
-        h('span', {{ style: 'font-size:30px;line-height:1;color:' + valueColor + ';font-weight:800;letter-spacing:0.5px;' }}, VALUE),
+        h('span', {{ style: `font-size:30px;line-height:1;color:${{$.valueColor}};font-weight:800;letter-spacing:0.5px;` }}, VALUE),
       ]),
       h('div', {{ class: 'sparkline', style: 'height:28px;width:100%;' }}),
-      h('div', {{ style: 'display:flex;justify-content:space-between;font-size:12px;color:' + subColor + ';gap:8px;' }}, [
+      h('div', {{ style: `display:flex;justify-content:space-between;font-size:12px;color:${{$.subColor}};gap:8px;` }}, [
         h('span', null, '同比 ' + YOY),
         h('span', {{ style: 'color:' + DELTA_COLOR + ';font-weight:700;' }}, DELTA_SYMBOL + ' ' + MOM + ' (环比)')
       ])
@@ -108,15 +95,8 @@ const NODES = [
 
 return {
   setup() {
-    const isDark = getEChartsTheme() === 'custom-dark'
-    const cardBg = isDark ? '#161f31' : '#fff'
-    const cardBorder = isDark ? '#2a3a56' : '#e9eef5'
-    const titleColor = isDark ? '#d8e2f1' : '#24344f'
-    const textColor = isDark ? '#a8b9d3' : '#60708b'
-    const valueColor = isDark ? '#edf3ff' : '#1e3352'
-    const rateColor = isDark ? '#b7c7df' : '#5d6f8f'
-    const arrowColor = isDark ? '#8097bb' : '#8aa0c4'
-    const palette = isDark
+    const $ = themeColors()
+    const palette = $.isDark
       ? ['#233450', '#244264', '#26506f', '#235965', '#206050', '#1f5a43']
       : ['#edf4ff', '#dceaff', '#d6f2ff', '#ddfbf2', '#ecfff2', '#f5fff7']
 
@@ -125,23 +105,23 @@ return {
         ? 'clip-path:polygon(0 0, calc(100% - 16px) 0, 100% 50%, calc(100% - 16px) 100%, 0 100%, 12px 50%);'
         : 'clip-path:polygon(0 0, 100% 0, 100% 100%, 0 100%, 12px 50%);'
       const pad = i === 0 ? 'padding:12px 14px;' : 'padding:12px 14px 12px 18px;'
-      const border = isDark ? 'rgba(155,179,212,.35)' : '#dfe8f5'
+      const border = $.isDark ? 'rgba(155,179,212,.35)' : '#dfe8f5'
       return 'flex:1;min-width:0;border-radius:8px;background:' + palette[i] + ';border:1px solid ' + border + ';position:relative;' + pad + clip
     }
 
     return () => h('div', {
-      style: 'height:100%;width:100%;background:' + cardBg + ';border:1px solid ' + cardBorder + ';border-radius:8px;padding:12px;box-sizing:border-box;'
+      style: cardStyle($)
     }, [
       h('div', { style: 'display:flex;align-items:center;gap:8px;margin-bottom:10px;' }, [
         h('span', { style: 'display:inline-flex;width:18px;height:18px;border-radius:4px;background:#4f89ff;color:#fff;font-size:12px;align-items:center;justify-content:center;font-weight:700;' }, '2'),
-        h('span', { style: 'font-size:14px;font-weight:700;color:' + titleColor + ';' }, '信贷漏斗（近30日）')
+        h('span', { style: `font-size:14px;font-weight:700;color:${$.titleColor};` }, '信贷漏斗（近30日）')
       ]),
       h('div', { style: 'display:flex;align-items:stretch;gap:8px;height:calc(100% - 30px);' },
         NODES.map((n, i) => h('div', { style: nodeStyle(i) }, [
-          h('div', { style: 'font-size:12px;color:' + textColor + ';margin-bottom:8px;' }, n.name),
-          h('div', { style: 'font-size:24px;font-weight:800;color:' + valueColor + ';line-height:1.1;margin-bottom:8px;' }, n.value),
-          h('div', { style: 'font-size:12px;color:' + rateColor + ';font-weight:700;' }, n.rate),
-          i < NODES.length - 1 ? h('div', { style: 'position:absolute;right:-14px;top:50%;transform:translateY(-50%);font-size:18px;color:' + arrowColor + ';font-weight:700;' }, '›') : null
+          h('div', { style: `font-size:12px;color:${$.textColor};margin-bottom:8px;` }, n.name),
+          h('div', { style: `font-size:24px;font-weight:800;color:${$.valueColor};line-height:1.1;margin-bottom:8px;` }, n.value),
+          h('div', { style: `font-size:12px;color:${$.rateColor};font-weight:700;` }, n.rate),
+          i < NODES.length - 1 ? h('div', { style: `position:absolute;right:-14px;top:50%;transform:translateY(-50%);font-size:18px;color:${$.arrowColor};font-weight:700;` }, '\u203a') : null
         ]))
       )
     ])
@@ -169,31 +149,23 @@ function trendColor(v) {
 
 return {
   setup() {
-    const isDark = getEChartsTheme() === 'custom-dark'
-    const cardBg = isDark ? '#161f31' : '#fff'
-    const cardBorder = isDark ? '#2a3a56' : '#e9eef5'
-    const titleColor = isDark ? '#d8e2f1' : '#24344f'
-    const tableColor = isDark ? '#b2c2db' : '#4e5f7c'
-    const headColor = isDark ? '#8fa4c4' : '#8594ad'
-    const lineColor = isDark ? '#283750' : '#edf1f7'
-    const rowColor = isDark ? '#24344d' : '#f3f6fa'
-    const strongColor = isDark ? '#e6eefb' : '#24344f'
+    const $ = themeColors()
 
-    return () => h('div', { style: 'height:100%;width:100%;background:' + cardBg + ';border:1px solid ' + cardBorder + ';border-radius:8px;padding:10px 12px;box-sizing:border-box;display:flex;flex-direction:column;' }, [
-      h('div', { style: 'font-size:14px;font-weight:700;color:' + titleColor + ';margin-bottom:8px;' }, '漏斗阶段汇总（近30日）'),
+    return () => h('div', { style: `height:100%;width:100%;background:${$.cardBg};border:1px solid ${$.cardBorder};border-radius:8px;padding:10px 12px;box-sizing:border-box;display:flex;flex-direction:column;` }, [
+      h('div', { style: `font-size:14px;font-weight:700;color:${$.titleColor};margin-bottom:8px;` }, '漏斗阶段汇总（近30日）'),
       h('div', { style: 'flex:1;min-height:0;overflow:auto;' }, [
-        h('table', { style: 'width:100%;border-collapse:collapse;font-size:12px;color:' + tableColor + ';' }, [
-        h('thead', { style: 'position:sticky;top:0;z-index:1;background:' + cardBg + ';' }, [
+        h('table', { style: `width:100%;border-collapse:collapse;font-size:12px;color:${$.tableColor};` }, [
+        h('thead', { style: `position:sticky;top:0;z-index:1;background:${$.headBg};` }, [
           h('tr', null, ['步骤', '用户量', '较上一步转化', '环比变化'].map(t =>
-            h('th', { style: 'text-align:left;padding:6px;border-bottom:1px solid ' + lineColor + ';color:' + headColor + ';font-weight:600;' }, t)
+            h('th', { style: `text-align:left;padding:6px;border-bottom:1px solid ${$.lineColor};color:${$.headColor};font-weight:600;` }, t)
           ))
         ]),
         h('tbody', null,
           ROWS.map(r => h('tr', null, [
-            h('td', { style: 'padding:7px 6px;border-bottom:1px solid ' + rowColor + ';' }, r[0]),
-            h('td', { style: 'padding:7px 6px;border-bottom:1px solid ' + rowColor + ';color:' + strongColor + ';font-weight:700;' }, r[1]),
-            h('td', { style: 'padding:7px 6px;border-bottom:1px solid ' + rowColor + ';' }, r[2]),
-            h('td', { style: 'padding:7px 6px;border-bottom:1px solid ' + rowColor + ';color:' + trendColor(r[3]) + ';font-weight:700;' }, r[3])
+            h('td', { style: `padding:7px 6px;border-bottom:1px solid ${$.rowColor};` }, r[0]),
+            h('td', { style: `padding:7px 6px;border-bottom:1px solid ${$.rowColor};color:${$.strongColor};font-weight:700;` }, r[1]),
+            h('td', { style: `padding:7px 6px;border-bottom:1px solid ${$.rowColor};` }, r[2]),
+            h('td', { style: `padding:7px 6px;border-bottom:1px solid ${$.rowColor};color:${trendColor(r[3])};font-weight:700;` }, r[3])
           ]))
         )
       ])
@@ -220,34 +192,26 @@ function c(v) {
 
 return {
   setup() {
-    const isDark = getEChartsTheme() === 'custom-dark'
-    const cardBg = isDark ? '#161f31' : '#fff'
-    const cardBorder = isDark ? '#2a3a56' : '#e9eef5'
-    const titleColor = isDark ? '#d8e2f1' : '#24344f'
-    const tableColor = isDark ? '#b2c2db' : '#4e5f7c'
-    const headColor = isDark ? '#8fa4c4' : '#8594ad'
-    const lineColor = isDark ? '#283750' : '#edf1f7'
-    const rowColor = isDark ? '#24344d' : '#f3f6fa'
-    const strongColor = isDark ? '#e6eefb' : '#24344f'
+    const $ = themeColors()
 
-    return () => h('div', { style: 'height:100%;width:100%;background:' + cardBg + ';border:1px solid ' + cardBorder + ';border-radius:8px;padding:10px 12px;box-sizing:border-box;display:flex;flex-direction:column;' }, [
+    return () => h('div', { style: `height:100%;width:100%;background:${$.cardBg};border:1px solid ${$.cardBorder};border-radius:8px;padding:10px 12px;box-sizing:border-box;display:flex;flex-direction:column;` }, [
       h('div', { style: 'display:flex;align-items:center;gap:8px;margin-bottom:8px;' }, [
         h('span', { style: 'display:inline-flex;width:18px;height:18px;border-radius:4px;background:#4f89ff;color:#fff;font-size:12px;align-items:center;justify-content:center;font-weight:700;' }, '3'),
-        h('span', { style: 'font-size:14px;font-weight:700;color:' + titleColor + ';' }, '渠道审批表现（异常定位）')
+        h('span', { style: `font-size:14px;font-weight:700;color:${$.titleColor};` }, '渠道审批表现（异常定位）')
       ]),
       h('div', { style: 'flex:1;min-height:0;overflow:auto;' }, [
-        h('table', { style: 'width:100%;border-collapse:collapse;font-size:12px;color:' + tableColor + ';' }, [
-        h('thead', { style: 'position:sticky;top:0;z-index:1;background:' + cardBg + ';' }, [
+        h('table', { style: `width:100%;border-collapse:collapse;font-size:12px;color:${$.tableColor};` }, [
+        h('thead', { style: `position:sticky;top:0;z-index:1;background:${$.headBg};` }, [
           h('tr', null, ['渠道', '批准率', '环比(pp)', '影响量'].map(t =>
-            h('th', { style: 'text-align:left;padding:6px;border-bottom:1px solid ' + lineColor + ';color:' + headColor + ';font-weight:600;' }, t)
+            h('th', { style: `text-align:left;padding:6px;border-bottom:1px solid ${$.lineColor};color:${$.headColor};font-weight:600;` }, t)
           ))
         ]),
         h('tbody', null,
           ROWS.map(r => h('tr', null, [
-            h('td', { style: 'padding:7px 6px;border-bottom:1px solid ' + rowColor + ';font-weight:600;color:' + strongColor + ';' }, r[0]),
-            h('td', { style: 'padding:7px 6px;border-bottom:1px solid ' + rowColor + ';' }, r[1]),
-            h('td', { style: 'padding:7px 6px;border-bottom:1px solid ' + rowColor + ';color:' + c(r[2]) + ';font-weight:700;' }, r[2]),
-            h('td', { style: 'padding:7px 6px;border-bottom:1px solid ' + rowColor + ';color:' + c(r[3]) + ';font-weight:700;' }, r[3])
+            h('td', { style: `padding:7px 6px;border-bottom:1px solid ${$.rowColor};font-weight:600;color:${$.strongColor};` }, r[0]),
+            h('td', { style: `padding:7px 6px;border-bottom:1px solid ${$.rowColor};` }, r[1]),
+            h('td', { style: `padding:7px 6px;border-bottom:1px solid ${$.rowColor};color:${c(r[2])};font-weight:700;` }, r[2]),
+            h('td', { style: `padding:7px 6px;border-bottom:1px solid ${$.rowColor};color:${c(r[3])};font-weight:700;` }, r[3])
           ]))
         )
       ])
@@ -258,7 +222,7 @@ return {
 
 
 def bar_code() -> str:
-    return '''const { ref, onMounted, onUnmounted, h } = vue
+    return '''const { onMounted, h } = vue
 
 const DATA = [
   { name: 'Facebook Ads', value: 22.41 },
@@ -270,32 +234,24 @@ const DATA = [
 
 return {
   setup() {
-    const isDark = getEChartsTheme() === 'custom-dark'
-    const cardBg = isDark ? '#161f31' : '#fff'
-    const cardBorder = isDark ? '#2a3a56' : '#e9eef5'
-    const titleColor = isDark ? '#d8e2f1' : '#24344f'
-    const axisColor = isDark ? '#8fa4c4' : '#6f7f99'
-    const splitColor = isDark ? '#2a3b58' : '#edf1f7'
-    const chartRef = ref(null)
-    let chart = null
+    const $ = themeColors()
+    const { chartRef, renderChart } = useChartLifecycle()
 
     onMounted(() => {
-      if (!chartRef.value) return
-      chart = echarts.init(chartRef.value, getEChartsTheme())
-      chart.setOption({
+      renderChart({
         animation: true,
         tooltip: { trigger: 'axis', axisPointer: { type: 'shadow' } },
         grid: { left: 40, right: 12, top: 30, bottom: 40 },
         xAxis: {
           type: 'category',
           data: DATA.map(d => d.name),
-          axisLabel: { interval: 0, rotate: 10, fontSize: 11, color: axisColor },
-          axisLine: { lineStyle: { color: splitColor } }
+          axisLabel: { interval: 0, rotate: 10, fontSize: 11, color: $.axisColor },
+          axisLine: { lineStyle: { color: $.splitColor } }
         },
         yAxis: {
           type: 'value',
-          axisLabel: { formatter: '{value}%', color: axisColor },
-          splitLine: { lineStyle: { color: splitColor, type: 'dashed' } }
+          axisLabel: { formatter: '{value}%', color: $.axisColor },
+          splitLine: { lineStyle: { color: $.splitColor, type: 'dashed' } }
         },
         series: [{
           type: 'bar',
@@ -310,17 +266,16 @@ return {
       })
     })
 
-    onUnmounted(() => chart?.dispose())
-    return () => h('div', { style: 'height:100%;width:100%;background:' + cardBg + ';border:1px solid ' + cardBorder + ';border-radius:8px;padding:8px;box-sizing:border-box;' }, [
-      h('div', { style: 'font-size:14px;font-weight:700;color:' + titleColor + ';margin:2px 0 4px 4px;' }, '各渠道放款成功率（近30日）'),
-      h('div', { ref: chartRef, style: 'height:calc(100% - 26px);width:100%;' })
+    return () => h('div', { style: cardStyle($) }, [
+      h('div', { style: `font-size:14px;font-weight:700;color:${$.titleColor};margin:2px 0 4px 4px;` }, '各渠道放款成功率（近30日）'),
+      h('div', { ref: chartRef, style: chartAreaStyle() })
     ])
   }
 }'''
 
 
 def pie_code() -> str:
-    return '''const { ref, onMounted, onUnmounted, h } = vue
+    return '''const { onMounted, h } = vue
 
 const DATA = [
   { name: '证件问题', value: 31.9 },
@@ -333,20 +288,13 @@ const DATA = [
 
 return {
   setup() {
-    const isDark = getEChartsTheme() === 'custom-dark'
-    const cardBg = isDark ? '#161f31' : '#fff'
-    const cardBorder = isDark ? '#2a3a56' : '#e9eef5'
-    const titleColor = isDark ? '#d8e2f1' : '#24344f'
-    const legendColor = isDark ? '#9eb1cf' : '#6f7f99'
-    const chartRef = ref(null)
-    let chart = null
+    const $ = themeColors()
+    const { chartRef, renderChart } = useChartLifecycle()
 
     onMounted(() => {
-      if (!chartRef.value) return
-      chart = echarts.init(chartRef.value, getEChartsTheme())
-      chart.setOption({
+      renderChart({
         tooltip: { trigger: 'item', formatter: '{b}: {c}%' },
-        legend: { orient: 'vertical', right: 8, top: 20, textStyle: { fontSize: 11, color: legendColor } },
+        legend: { orient: 'vertical', right: 8, top: 20, textStyle: { fontSize: 11, color: $.legendColor } },
         series: [{
           type: 'pie',
           radius: ['38%', '68%'],
@@ -359,17 +307,16 @@ return {
       })
     })
 
-    onUnmounted(() => chart?.dispose())
-    return () => h('div', { style: 'height:100%;width:100%;background:' + cardBg + ';border:1px solid ' + cardBorder + ';border-radius:8px;padding:8px;box-sizing:border-box;' }, [
-      h('div', { style: 'font-size:14px;font-weight:700;color:' + titleColor + ';margin:2px 0 4px 4px;' }, 'KYC失败原因分布（近30日）'),
-      h('div', { ref: chartRef, style: 'height:calc(100% - 26px);width:100%;' })
+    return () => h('div', { style: cardStyle($) }, [
+      h('div', { style: `font-size:14px;font-weight:700;color:${$.titleColor};margin:2px 0 4px 4px;` }, 'KYC失败原因分布（近30日）'),
+      h('div', { ref: chartRef, style: chartAreaStyle() })
     ])
   }
 }'''
 
 
 def trend_code() -> str:
-    return '''const { ref, onMounted, onUnmounted, h } = vue
+    return '''const { onMounted, h } = vue
 
 const X = ['04-21', '04-26', '05-01', '05-06', '05-11', '05-16', '05-21', '05-26', '06-01', '06-06', '06-11', '06-16']
 const APPROVAL = [28.6, 28.9, 28.3, 28.1, 27.9, 27.5, 27.8, 28.0, 27.7, 27.5, 27.3, 27.1]
@@ -377,27 +324,19 @@ const KPI = [3.4, 3.5, 3.3, 3.5, 3.2, 3.4, 3.3, 3.1, 3.2, 3.0, 3.1, 3.2]
 
 return {
   setup() {
-    const isDark = getEChartsTheme() === 'custom-dark'
-    const cardBg = isDark ? '#161f31' : '#fff'
-    const cardBorder = isDark ? '#2a3a56' : '#e9eef5'
-    const titleColor = isDark ? '#d8e2f1' : '#24344f'
-    const axisColor = isDark ? '#9eb1cf' : '#6f7f99'
-    const splitColor = isDark ? '#2a3b58' : '#edf1f7'
-    const chartRef = ref(null)
-    let chart = null
+    const $ = themeColors()
+    const { chartRef, renderChart } = useChartLifecycle()
 
     onMounted(() => {
-      if (!chartRef.value) return
-      chart = echarts.init(chartRef.value, getEChartsTheme())
-      chart.setOption({
+      renderChart({
         tooltip: { trigger: 'axis' },
-        legend: { top: 4, textStyle: { color: axisColor } },
+        legend: { top: 4, textStyle: { color: $.axisColor } },
         grid: { left: 40, right: 30, top: 40, bottom: 30 },
         xAxis: {
           type: 'category',
           data: X,
-          axisLabel: { color: axisColor },
-          axisLine: { lineStyle: { color: splitColor } }
+          axisLabel: { color: $.axisColor },
+          axisLine: { lineStyle: { color: $.splitColor } }
         },
         yAxis: [
           {
@@ -405,17 +344,17 @@ return {
             name: '通过率(%)',
             min: 24,
             max: 32,
-            nameTextStyle: { color: axisColor },
-            axisLabel: { color: axisColor },
-            splitLine: { lineStyle: { color: splitColor, type: 'dashed' } }
+            nameTextStyle: { color: $.axisColor },
+            axisLabel: { color: $.axisColor },
+            splitLine: { lineStyle: { color: $.splitColor, type: 'dashed' } }
           },
           {
             type: 'value',
             name: 'DPD7(%)',
             min: 2,
             max: 5,
-            nameTextStyle: { color: axisColor },
-            axisLabel: { color: axisColor },
+            nameTextStyle: { color: $.axisColor },
+            axisLabel: { color: $.axisColor },
             splitLine: { show: false }
           }
         ],
@@ -442,13 +381,12 @@ return {
       })
     })
 
-    onUnmounted(() => chart?.dispose())
-    return () => h('div', { style: 'height:100%;width:100%;background:' + cardBg + ';border:1px solid ' + cardBorder + ';border-radius:8px;padding:8px;box-sizing:border-box;' }, [
-      h('div', { style: 'display:flex;justify-content:space-between;align-items:center;margin:2px 0 4px 4px;' }, [
-        h('span', { style: 'font-size:14px;font-weight:700;color:' + titleColor + ';' }, 'AI日级分析（审批与坏账趋势）'),
+    return () => h('div', { style: cardStyle($) }, [
+      h('div', { style: `display:flex;justify-content:space-between;align-items:center;margin:2px 0 4px 4px;` }, [
+        h('span', { style: `font-size:14px;font-weight:700;color:${$.titleColor};` }, 'AI日级分析（审批与坏账趋势）'),
         h('span', { style: 'font-size:20px;font-weight:800;color:#ef5b66;padding-right:6px;' }, '3.21%')
       ]),
-      h('div', { ref: chartRef, style: 'height:calc(100% - 26px);width:100%;' })
+      h('div', { ref: chartRef, style: chartAreaStyle() })
     ])
   }
 }'''
@@ -472,26 +410,19 @@ const ACTIONS = [
 
 return {
   setup() {
-    const isDark = getEChartsTheme() === 'custom-dark'
-    const cardBg = isDark ? '#161f31' : '#fff'
-    const cardBorder = isDark ? '#2a3a56' : '#e9eef5'
-    const titleColor = isDark ? '#d8e2f1' : '#24344f'
-    const strongColor = isDark ? '#d4e0f2' : '#2a3f62'
-    const bodyColor = isDark ? '#9eb1cf' : '#556987'
+    const $ = themeColors()
 
-    return () => h('div', {
-      style: 'height:100%;width:100%;background:' + cardBg + ';border:1px solid ' + cardBorder + ';border-radius:8px;padding:12px;box-sizing:border-box;'
-    }, [
+    return () => h('div', { style: cardStyle($) }, [
       h('div', { style: 'display:flex;align-items:center;gap:8px;margin-bottom:10px;' }, [
         h('span', { style: 'display:inline-flex;width:18px;height:18px;border-radius:4px;background:#4f89ff;color:#fff;font-size:12px;align-items:center;justify-content:center;font-weight:700;' }, '4'),
-        h('span', { style: 'font-size:14px;font-weight:700;color:' + titleColor + ';' }, 'AI日级分析区')
+        h('span', { style: `font-size:14px;font-weight:700;color:${$.titleColor};` }, 'AI日级分析区')
       ]),
-      h('div', { style: 'font-size:13px;font-weight:700;color:' + strongColor + ';margin-bottom:6px;' }, '核心结论'),
-      h('ul', { style: 'margin:0 0 10px 16px;padding:0;color:' + bodyColor + ';font-size:12px;line-height:1.6;' },
+      h('div', { style: `font-size:13px;font-weight:700;color:${$.strongColor};margin-bottom:6px;` }, '核心结论'),
+      h('ul', { style: `margin:0 0 10px 16px;padding:0;color:${$.bodyColor};font-size:12px;line-height:1.6;` },
         FACTS.map(i => h('li', null, i))
       ),
-      h('div', { style: 'font-size:13px;font-weight:700;color:' + strongColor + ';margin-bottom:6px;' }, '建议动作'),
-      h('ul', { style: 'margin:0 0 0 16px;padding:0;color:' + bodyColor + ';font-size:12px;line-height:1.6;' },
+      h('div', { style: `font-size:13px;font-weight:700;color:${$.strongColor};margin-bottom:6px;` }, '建议动作'),
+      h('ul', { style: `margin:0 0 0 16px;padding:0;color:${$.bodyColor};font-size:12px;line-height:1.6;` },
         ACTIONS.map(i => h('li', null, i))
       )
     ])
