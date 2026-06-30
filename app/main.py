@@ -36,7 +36,7 @@ async def lifespan(app: FastAPI):
     async with engine.begin() as conn:
         await conn.run_sync(Base.metadata.create_all)
         # Add component_type/component_code columns if upgrading from older schema
-        for col, spec in [("component_type", "VARCHAR(20) NOT NULL DEFAULT 'legacy'"),
+        for col, spec in [("component_type", "VARCHAR(20) NOT NULL DEFAULT 'dynamic'"),
                           ("component_code", "TEXT")]:
             try:
                 await conn.execute(

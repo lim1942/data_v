@@ -23,8 +23,7 @@ def kpi_card_code(title: str, value: str, yoy: str, mom: str, trend: str, series
     line_color = "#3a7afe" if trend == "up" else "#ff6b6b"
     area_color = "rgba(58, 122, 254, 0.12)" if trend == "up" else "rgba(255, 107, 107, 0.12)"
     data = ", ".join(str(v) for v in series)
-    return f'''const {{ ref, onMounted, h }} = vue
-
+    return f'''
 const TITLE = "{title}"
 const VALUE = "{value}"
 const YOY = "{yoy}"
@@ -82,7 +81,7 @@ return {{
 
 
 def flow_strip_code() -> str:
-  return '''const { h } = vue
+  return '''
 
 const NODES = [
   { name: '申请', value: '128,473', rate: '100%' },
@@ -130,7 +129,7 @@ return {
 
 
 def stage_table_code() -> str:
-    return '''const { h } = vue
+    return '''
 
 const ROWS = [
   ['申请', '128,473', '100%', '-'],
@@ -176,7 +175,7 @@ return {
 
 
 def channel_table_code() -> str:
-    return '''const { h } = vue
+    return '''
 
 const ROWS = [
   ['Facebook Ads', '22.41%', '-2.35', '-1,214'],
@@ -222,7 +221,7 @@ return {
 
 
 def bar_code() -> str:
-    return '''const { onMounted, h } = vue
+    return '''
 
 const DATA = [
   { name: 'Facebook Ads', value: 22.41 },
@@ -275,7 +274,7 @@ return {
 
 
 def pie_code() -> str:
-    return '''const { onMounted, h } = vue
+    return '''
 
 const DATA = [
   { name: '证件问题', value: 31.9 },
@@ -316,7 +315,7 @@ return {
 
 
 def trend_code() -> str:
-    return '''const { onMounted, h } = vue
+    return '''
 
 const X = ['04-21', '04-26', '05-01', '05-06', '05-11', '05-16', '05-21', '05-26', '06-01', '06-06', '06-11', '06-16']
 const APPROVAL = [28.6, 28.9, 28.3, 28.1, 27.9, 27.5, 27.8, 28.0, 27.7, 27.5, 27.3, 27.1]
@@ -393,8 +392,7 @@ return {
 
 
 def ai_summary_code() -> str:
-    return '''const { h } = vue
-
+    return '''
 const FACTS = [
   '近30日审批通过率 27.35%，较上期下降 0.6pp。',
   'KYC阶段损失集中在证件问题与评分不足。',
