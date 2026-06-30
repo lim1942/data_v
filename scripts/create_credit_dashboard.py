@@ -447,8 +447,6 @@ async def upsert_chart(db, title: str, code: str, created_by: int | None) -> Cha
     if chart is None:
         chart = Chart(
             title=title,
-            data_source=None,
-            options_config={},
             component_type="dynamic",
             component_code=code,
             created_by=created_by,
@@ -459,7 +457,6 @@ async def upsert_chart(db, title: str, code: str, created_by: int | None) -> Cha
     else:
         chart.component_type = "dynamic"
         chart.component_code = code
-        chart.options_config = {}
         print(f"  * 更新图表: {title}")
     return chart
 

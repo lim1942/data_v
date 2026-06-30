@@ -161,16 +161,12 @@ class FilterResponse(BaseModel):
 # ── Chart ─────────────────────────────────────────────
 class ChartCreate(BaseModel):
     title: str = Field(..., min_length=1, max_length=100)
-    data_source: str | None = None
-    options_config: dict = {}
-    component_type: str = "legacy"
+    component_type: str = "dynamic"
     component_code: str | None = None
 
 
 class ChartUpdate(BaseModel):
     title: str | None = None
-    data_source: str | None = None
-    options_config: dict | None = None
     component_type: str | None = None
     component_code: str | None = None
 
@@ -178,8 +174,6 @@ class ChartUpdate(BaseModel):
 class ChartResponse(BaseModel):
     id: int
     title: str
-    data_source: str | None
-    options_config: dict
     component_type: str
     component_code: str | None
     created_by: int | None

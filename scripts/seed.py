@@ -470,8 +470,6 @@ async def seed():
         charts = {}
         for cd in chart_defs:
             c, created = await _get_or_create(db, Chart, {"title": cd["title"]}, {
-                "data_source": None,
-                "options_config": {},
                 "component_type": "dynamic",
                 "component_code": cd.get("component_code"),
                 "created_by": admin_user.id,
